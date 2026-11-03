@@ -1,19 +1,24 @@
-"""Aplicação Flask; o motor analítico permanece independente do servidor."""
 from flask import Flask
 
 from app.context import load_project
 from app.formatting import fmt
 from config import DATA_PATH
 
+MAX_REQUEST_BYTES = 1024 * 1024
+
 
 def create_app(test_config=None):
-    app = Flask(__name__)
-    app.config.from_mapping(DATA_PATH=DATA_PATH, MAX_CONTENT_LENGTH=1024 * 1024)
+    application = Flask(__name__)
+    application.config.from_mapping(
+        DATA_PATH=DATA_PATH,
+        MAX_CONTENT_LENGTH=MAX_REQUEST_BYTES,
+    )
     if test_config:
-        app.config.update(test_config)
-    app.extensions["project"] = load_project(app.config["DATA_PATH"])
-    app.jinja_env.filters["fmt"] = fmt
-    from app.routes import report
-    app.register_blueprint(report)
-    return app
+        application.config.update(test_config)
 
+    application.extensions["project"] = load_project(application.config["DATA_PATH"])
+    application.jinja_env.filters["fmt"] = fmt
+
+    from app.routes import report
+    application.register_blueprint(report)
+    return application

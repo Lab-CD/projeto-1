@@ -1,50 +1,110 @@
 {% extends 'base.html' %}
 
 {% block description %}
-  Selecione a equipe e a variável para consultar medidas e distribuições.
+  Escolha a equipe e a variável: veja primeiro o resumo, depois os gráficos, as medidas e os jogos extremos.
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
-    <h2>Medidas de {{ schema[variable].label|lower }}</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Medidas descritivas por equipe"
-    >
-      {{ statistics_table }}
+  <section class="team-summaries" aria-label="Resumo de {{ schema[variable].label|lower }} por equipe">
+    {% for card in distributions %}
+      <article class="team-summary" style="--team-color: {{ card.team.color }}">
+        <header>
+          <h2>{{ card.team.name }}</h2>
+          <span class="chip">{{ card.summary.n }} valores válidos</span>
+        </header>
+        <dl class="summary-figures">
+          <div>
+            <dt>Média</dt>
+            <dd>{{ card.summary.mean|fmt }}</dd>
+          </div>
+          <div>
+            <dt>Mediana</dt>
+            <dd>{{ card.summary.median|fmt }}</dd>
+          </div>
+          <div>
+            <dt>CV</dt>
+            <dd>{{ card.summary.cv|fmt }}<small>%</small></dd>
+          </div>
+          <div>
+            <dt>IQR</dt>
+            <dd>{{ card.summary.iqr|fmt }}</dd>
+          </div>
+          <div>
+            <dt>Outliers</dt>
+            <dd>{{ card.summary.outlier_count }}</dd>
+          </div>
+        </dl>
+        <p class="summary-reading">
+          Distribuição {{ card.summary.intensity }}, assimetria {{ card.summary.direction }}
+          (G1 = {{ card.summary.skew|fmt }}). Unidade: {{ schema[variable].unit }}.
+        </p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <div class="tabs" data-tabs>
+    <div class="tab-list" role="tablist" aria-label="Seções da análise univariada">
+      <button class="tab" role="tab" id="tab-graficos" aria-controls="painel-graficos" aria-selected="true">
+        Gráficos
+      </button>
+      <button class="tab" role="tab" id="tab-medidas" aria-controls="painel-medidas" aria-selected="false" tabindex="-1">
+        Todas as medidas
+      </button>
+      <button class="tab" role="tab" id="tab-extremos" aria-controls="painel-extremos" aria-selected="false" tabindex="-1">
+        Jogos extremos
+      </button>
     </div>
-  </section>
-  <section class="panel">
-    <div class="chart">{{ boxplot }}</div>
-  </section>
-  {% for card in distributions %}
-    <section class="panel">
-      <span class="chip">{{ card.summary.n }} valores válidos</span>
-      <div class="chart">{{ card.histogram }}</div>
+
+    <section class="tab-panel" role="tabpanel" id="painel-graficos" aria-labelledby="tab-graficos">
+      <div class="panel">
+        <div class="chart">{{ boxplot }}</div>
+      </div>
+      <div class="chart-grid">
+        {% for card in distributions %}
+          <div class="panel">
+            <div class="chart">{{ card.histogram }}</div>
+          </div>
+        {% endfor %}
+      </div>
     </section>
-  {% endfor %}
-  <section class="panel">
-    <h2>Jogos fora dos limites IQR</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Lista de jogos sinalizados pelo IQR"
-    >
-      {{ extremes_table }}
-    </div>
-  </section>
-  <section class="panel">
-    <h2>Sensibilidade aos extremos</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Análise de sensibilidade com e sem extremos"
-    >
-      {{ sensitivity_table }}
-    </div>
-  </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-medidas" aria-labelledby="tab-medidas" hidden>
+      <div class="panel">
+        <h2>Medidas de {{ schema[variable].label|lower }}</h2>
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Medidas descritivas por equipe"
+        >
+          {{ statistics_table }}
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-extremos" aria-labelledby="tab-extremos" hidden>
+      <div class="panel">
+        <h2>Jogos fora dos limites IQR</h2>
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Lista de jogos sinalizados pelo IQR"
+        >
+          {{ extremes_table }}
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Sensibilidade aos extremos</h2>
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Análise de sensibilidade com e sem extremos"
+        >
+          {{ sensitivity_table }}
+        </div>
+      </div>
+    </section>
+  </div>
 {% endblock %}

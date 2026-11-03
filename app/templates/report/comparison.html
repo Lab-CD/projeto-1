@@ -1,61 +1,88 @@
 {% extends 'base.html' %}
 
 {% block description %}
-  Compare as medidas das duas equipes por variável.
+  Veja quem lidera na medida escolhida e depois compare dispersão, regularidade e forma das distribuições.
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
-    <div class="chart">{{ bar_chart }}</div>
-    {% if reference %}
-      <p class="chart-note">
-        <strong>Referência conjunta das duas equipes:</strong>
-        {{ reference.n }} valores válidos; média {{ reference.mean|fmt }} e desvio {{ reference.std|fmt }} {{ schema[variable].unit }}.
-      </p>
-    {% endif %}
+  <section class="duel" aria-label="{{ measure_label }} de {{ schema[variable].label|lower }}">
+    {% for item in measure_values %}
+      <article class="duel-card" style="--team-color: {{ item.team.color }}">
+        <span class="duel-team">{{ item.team.name }}</span>
+        <strong class="duel-value">{{ item.value|fmt }}</strong>
+        <span class="duel-unit">{{ measure_label }} · {{ measure_unit }}</span>
+      </article>
+      {% if loop.first and measure_values|length == 2 %}
+        <span class="duel-versus" aria-hidden="true">vs</span>
+      {% endif %}
+    {% endfor %}
   </section>
-  <section class="panel">
-    <h2>Coeficiente de variação (%)</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Coeficiente de variação por variável e time"
-    >
-      {{ cv_table }}
+
+  <div class="tabs" data-tabs>
+    <div class="tab-list" role="tablist" aria-label="Seções da comparação">
+      <button class="tab" role="tab" id="tab-grafico" aria-controls="painel-grafico" aria-selected="true">
+        Gráfico
+      </button>
+      <button class="tab" role="tab" id="tab-cv" aria-controls="painel-cv" aria-selected="false" tabindex="-1">
+        Regularidade (CV)
+      </button>
+      <button class="tab" role="tab" id="tab-iqr" aria-controls="painel-iqr" aria-selected="false" tabindex="-1">
+        Dispersão (IQR)
+      </button>
+      <button class="tab" role="tab" id="tab-assimetria" aria-controls="painel-assimetria" aria-selected="false" tabindex="-1">
+        Assimetria
+      </button>
+      <button class="tab" role="tab" id="tab-quadro" aria-controls="painel-quadro" aria-selected="false" tabindex="-1">
+        Quadro completo
+      </button>
     </div>
-  </section>
-  <section class="panel">
-    <h2>Intervalo interquartil</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="IQR por variável e time"
-    >
-      {{ iqr_table }}
-    </div>
-  </section>
-  <section class="panel">
-    <h2>Assimetria ajustada</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Assimetria por variável e time"
-    >
-      {{ skew_table }}
-    </div>
-  </section>
-  <section class="panel">
-    <h2>Quartis e dispersão</h2>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Quadro completo por variável e time"
-    >
-      {{ comparison_details }}
-    </div>
-  </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-grafico" aria-labelledby="tab-grafico">
+      <div class="panel">
+        <div class="chart">{{ bar_chart }}</div>
+        {% if reference %}
+          <p class="chart-note">
+            <strong>Referência conjunta das duas equipes:</strong>
+            {{ reference.n }} valores válidos; média {{ reference.mean|fmt }} e desvio {{ reference.std|fmt }} {{ schema[variable].unit }}.
+          </p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-cv" aria-labelledby="tab-cv" hidden>
+      <div class="panel">
+        <h2>Coeficiente de variação (%)</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Coeficiente de variação por variável e time">
+          {{ cv_table }}
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-iqr" aria-labelledby="tab-iqr" hidden>
+      <div class="panel">
+        <h2>Intervalo interquartil</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="IQR por variável e time">
+          {{ iqr_table }}
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-assimetria" aria-labelledby="tab-assimetria" hidden>
+      <div class="panel">
+        <h2>Assimetria ajustada</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Assimetria por variável e time">
+          {{ skew_table }}
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" role="tabpanel" id="painel-quadro" aria-labelledby="tab-quadro" hidden>
+      <div class="panel">
+        <h2>Quartis e dispersão</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Quadro completo por variável e time">
+          {{ comparison_details }}
+        </div>
+      </div>
+    </section>
+  </div>
 {% endblock %}

@@ -1,61 +1,290 @@
-"""Fonte única dos nomes, tipos, domínios e unidades das 28 colunas."""
-
-# original, nome interno, rótulo, natureza, unidade, significado
-_COLUMNS = [
-    ("Team_ID", "time_id", "ID do time", "identificador", "sem unidade", "Identifica a equipe; números usados como código, não como medida."),
-    ("Game_ID", "partida_id", "ID da partida", "identificador", "sem unidade", "Identifica a partida; a chave do registro é time + partida."),
-    ("GAME_DATE", "data_partida", "Data da partida", "data", "data", "Dia do jogo, sem horário ou fuso informado."),
-    ("MATCHUP", "confronto", "Confronto", "texto", "sem unidade", "Equipes e mando: vs. indica casa; @ indica visitante."),
-    ("WL", "venceu", "Vitória", "binária", "0 ou 1", "Resultado da partida: 1 = vitória, 0 = derrota."),
-    ("W", "vitorias_acumuladas", "Vitórias acumuladas", "contagem acumulada", "vitórias", "Vitórias acumuladas até a partida, incluindo o jogo atual."),
-    ("L", "derrotas_acumuladas", "Derrotas acumuladas", "contagem acumulada", "derrotas", "Derrotas acumuladas até a partida, incluindo o jogo atual."),
-    ("W_PCT", "proporcao_vitorias", "Aproveitamento acumulado", "proporção acumulada", "%", "Vitórias divididas por vitórias + derrotas; armazenada em [0, 1]."),
-    ("MIN", "minutos_equipe", "Minutos da equipe", "contagem", "minutos-equipe/jogo", "Valores compatíveis com soma de minutos dos jogadores (240, 265, 290). Interpretação ainda a confirmar na fonte."),
-    ("FGM", "arremessos_quadra_convertidos", "Cestas de quadra", "contagem", "cestas/jogo", "Arremessos de quadra convertidos, incluindo cestas de três."),
-    ("FGA", "arremessos_quadra_tentados", "Tentativas de quadra", "contagem", "tentativas/jogo", "Todos os arremessos de quadra tentados."),
-    ("FG_PCT", "aproveitamento_quadra", "Aproveitamento de quadra", "proporção", "%", "Razão FGM/FGA, armazenada em [0, 1]."),
-    ("FG3M", "cestas_tres_convertidas", "Cestas de três", "contagem", "cestas de três/jogo", "Arremessos de três pontos convertidos."),
-    ("FG3A", "cestas_tres_tentadas", "Tentativas de três", "contagem", "tentativas/jogo", "Arremessos de três pontos tentados."),
-    ("FG3_PCT", "aproveitamento_tres", "Aproveitamento de três", "proporção", "%", "Razão FG3M/FG3A, armazenada em [0, 1]."),
-    ("FTM", "lances_livres_convertidos", "Lances livres convertidos", "contagem", "lances livres/jogo", "Lances livres convertidos."),
-    ("FTA", "lances_livres_tentados", "Lances livres tentados", "contagem", "tentativas/jogo", "Lances livres tentados."),
-    ("FT_PCT", "aproveitamento_lance_livre", "Aproveitamento de lance livre", "proporção", "%", "Razão FTM/FTA, armazenada em [0, 1]."),
-    ("OREB", "rebotes_ofensivos", "Rebotes ofensivos", "contagem", "rebotes/jogo", "Rebotes recuperados no ataque."),
-    ("DREB", "rebotes_defensivos", "Rebotes defensivos", "contagem", "rebotes/jogo", "Rebotes recuperados na defesa."),
-    ("REB", "rebotes", "Rebotes", "contagem", "rebotes/jogo", "Total de rebotes ofensivos e defensivos."),
-    ("AST", "assistencias", "Assistências", "contagem", "assistências/jogo", "Passes registrados como assistência."),
-    ("STL", "roubos_bola", "Roubos de bola", "contagem", "roubos/jogo", "Roubos de bola registrados; zero é válido."),
-    ("BLK", "tocos", "Tocos", "contagem", "tocos/jogo", "Bloqueios de arremesso; zero é válido."),
-    ("TOV", "desperdicios_bola", "Perdas de bola", "contagem", "perdas/jogo", "Posses perdidas (turnovers)."),
-    ("PF", "faltas_pessoais", "Faltas pessoais", "contagem", "faltas/jogo", "Faltas pessoais cometidas pela equipe."),
-    ("PTS", "pontos", "Pontos", "contagem", "pontos/jogo", "Pontuação total da equipe na partida."),
-    ("TEAM_NAME", "time", "Time", "categórica", "sem unidade", "Nome da equipe, associado a um ID de time."),
-]
-
-SCHEMA = {
-    name: {"original": original, "label": label, "kind": kind,
-           "unit": unit, "description": description}
-    for original, name, label, kind, unit, description in _COLUMNS
+NUMERIC_KINDS = {
+    "contagem",
+    "contagem acumulada",
+    "proporção",
+    "proporção acumulada",
+    "binária",
 }
-
-RENAME = {v["original"]: k for k, v in SCHEMA.items()}
-
-NUMERIC = tuple(k for k, v in SCHEMA.items() if v["kind"] in
-                {"contagem", "contagem acumulada", "proporção", "proporção acumulada", "binária"})
-                
-MEASUREMENTS = tuple(k for k, v in SCHEMA.items() if v["kind"] in {"contagem", "proporção"})
+MEASUREMENT_KINDS = {"contagem", "proporção"}
 
 
-def dictionary_rows(df):
+def _column(original_name, internal_name, label, kind, unit, description):
+    metadata = {
+        "original": original_name,
+        "label": label,
+        "kind": kind,
+        "unit": unit,
+        "description": description,
+    }
+    return internal_name, metadata
+
+
+SCHEMA = dict([
+    _column(
+        original_name="Team_ID",
+        internal_name="time_id",
+        label="ID do time",
+        kind="identificador",
+        unit="sem unidade",
+        description="Identifica a equipe; números usados como código, não como medida.",
+    ),
+    _column(
+        original_name="Game_ID",
+        internal_name="partida_id",
+        label="ID da partida",
+        kind="identificador",
+        unit="sem unidade",
+        description="Identifica a partida; a chave do registro é time + partida.",
+    ),
+    _column(
+        original_name="GAME_DATE",
+        internal_name="data_partida",
+        label="Data da partida",
+        kind="data",
+        unit="data",
+        description="Dia do jogo, sem horário ou fuso informado.",
+    ),
+    _column(
+        original_name="MATCHUP",
+        internal_name="confronto",
+        label="Confronto",
+        kind="texto",
+        unit="sem unidade",
+        description="Equipes e mando: vs. indica casa; @ indica visitante.",
+    ),
+    _column(
+        original_name="WL",
+        internal_name="venceu",
+        label="Vitória",
+        kind="binária",
+        unit="0 ou 1",
+        description="Resultado da partida: 1 = vitória, 0 = derrota.",
+    ),
+    _column(
+        original_name="W",
+        internal_name="vitorias_acumuladas",
+        label="Vitórias acumuladas",
+        kind="contagem acumulada",
+        unit="vitórias",
+        description="Vitórias acumuladas até a partida, incluindo o jogo atual.",
+    ),
+    _column(
+        original_name="L",
+        internal_name="derrotas_acumuladas",
+        label="Derrotas acumuladas",
+        kind="contagem acumulada",
+        unit="derrotas",
+        description="Derrotas acumuladas até a partida, incluindo o jogo atual.",
+    ),
+    _column(
+        original_name="W_PCT",
+        internal_name="proporcao_vitorias",
+        label="Aproveitamento acumulado",
+        kind="proporção acumulada",
+        unit="%",
+        description="Vitórias divididas por vitórias + derrotas; armazenada em [0, 1].",
+    ),
+    _column(
+        original_name="MIN",
+        internal_name="minutos_equipe",
+        label="Minutos da equipe",
+        kind="contagem",
+        unit="minutos-equipe/jogo",
+        description=(
+            "Valores compatíveis com soma de minutos dos jogadores (240, 265, 290). "
+            "Interpretação ainda a confirmar na fonte."
+        ),
+    ),
+    _column(
+        original_name="FGM",
+        internal_name="arremessos_quadra_convertidos",
+        label="Cestas de quadra",
+        kind="contagem",
+        unit="cestas/jogo",
+        description="Arremessos de quadra convertidos, incluindo cestas de três.",
+    ),
+    _column(
+        original_name="FGA",
+        internal_name="arremessos_quadra_tentados",
+        label="Tentativas de quadra",
+        kind="contagem",
+        unit="tentativas/jogo",
+        description="Todos os arremessos de quadra tentados.",
+    ),
+    _column(
+        original_name="FG_PCT",
+        internal_name="aproveitamento_quadra",
+        label="Aproveitamento de quadra",
+        kind="proporção",
+        unit="%",
+        description="Razão FGM/FGA, armazenada em [0, 1].",
+    ),
+    _column(
+        original_name="FG3M",
+        internal_name="cestas_tres_convertidas",
+        label="Cestas de três",
+        kind="contagem",
+        unit="cestas de três/jogo",
+        description="Arremessos de três pontos convertidos.",
+    ),
+    _column(
+        original_name="FG3A",
+        internal_name="cestas_tres_tentadas",
+        label="Tentativas de três",
+        kind="contagem",
+        unit="tentativas/jogo",
+        description="Arremessos de três pontos tentados.",
+    ),
+    _column(
+        original_name="FG3_PCT",
+        internal_name="aproveitamento_tres",
+        label="Aproveitamento de três",
+        kind="proporção",
+        unit="%",
+        description="Razão FG3M/FG3A, armazenada em [0, 1].",
+    ),
+    _column(
+        original_name="FTM",
+        internal_name="lances_livres_convertidos",
+        label="Lances livres convertidos",
+        kind="contagem",
+        unit="lances livres/jogo",
+        description="Lances livres convertidos.",
+    ),
+    _column(
+        original_name="FTA",
+        internal_name="lances_livres_tentados",
+        label="Lances livres tentados",
+        kind="contagem",
+        unit="tentativas/jogo",
+        description="Lances livres tentados.",
+    ),
+    _column(
+        original_name="FT_PCT",
+        internal_name="aproveitamento_lance_livre",
+        label="Aproveitamento de lance livre",
+        kind="proporção",
+        unit="%",
+        description="Razão FTM/FTA, armazenada em [0, 1].",
+    ),
+    _column(
+        original_name="OREB",
+        internal_name="rebotes_ofensivos",
+        label="Rebotes ofensivos",
+        kind="contagem",
+        unit="rebotes/jogo",
+        description="Rebotes recuperados no ataque.",
+    ),
+    _column(
+        original_name="DREB",
+        internal_name="rebotes_defensivos",
+        label="Rebotes defensivos",
+        kind="contagem",
+        unit="rebotes/jogo",
+        description="Rebotes recuperados na defesa.",
+    ),
+    _column(
+        original_name="REB",
+        internal_name="rebotes",
+        label="Rebotes",
+        kind="contagem",
+        unit="rebotes/jogo",
+        description="Total de rebotes ofensivos e defensivos.",
+    ),
+    _column(
+        original_name="AST",
+        internal_name="assistencias",
+        label="Assistências",
+        kind="contagem",
+        unit="assistências/jogo",
+        description="Passes registrados como assistência.",
+    ),
+    _column(
+        original_name="STL",
+        internal_name="roubos_bola",
+        label="Roubos de bola",
+        kind="contagem",
+        unit="roubos/jogo",
+        description="Roubos de bola registrados; zero é válido.",
+    ),
+    _column(
+        original_name="BLK",
+        internal_name="tocos",
+        label="Tocos",
+        kind="contagem",
+        unit="tocos/jogo",
+        description="Bloqueios de arremesso; zero é válido.",
+    ),
+    _column(
+        original_name="TOV",
+        internal_name="desperdicios_bola",
+        label="Perdas de bola",
+        kind="contagem",
+        unit="perdas/jogo",
+        description="Posses perdidas (turnovers).",
+    ),
+    _column(
+        original_name="PF",
+        internal_name="faltas_pessoais",
+        label="Faltas pessoais",
+        kind="contagem",
+        unit="faltas/jogo",
+        description="Faltas pessoais cometidas pela equipe.",
+    ),
+    _column(
+        original_name="PTS",
+        internal_name="pontos",
+        label="Pontos",
+        kind="contagem",
+        unit="pontos/jogo",
+        description="Pontuação total da equipe na partida.",
+    ),
+    _column(
+        original_name="TEAM_NAME",
+        internal_name="time",
+        label="Time",
+        kind="categórica",
+        unit="sem unidade",
+        description="Nome da equipe, associado a um ID de time.",
+    ),
+])
+
+RENAME = {metadata["original"]: name for name, metadata in SCHEMA.items()}
+
+NUMERIC = tuple(
+    name for name, metadata in SCHEMA.items()
+    if metadata["kind"] in NUMERIC_KINDS
+)
+
+MEASUREMENTS = tuple(
+    name for name, metadata in SCHEMA.items()
+    if metadata["kind"] in MEASUREMENT_KINDS
+)
+
+
+def describe_domain(kind):
+    if "contagem" in kind:
+        return "inteiro ≥ 0"
+    if "proporção" in kind:
+        return "[0, 1]"
+    if kind == "binária":
+        return "{0, 1}"
+    if kind == "data":
+        return "data válida"
+    return "código / texto não vazio"
+
+
+def dictionary_rows(dataframe):
     rows = []
-    for name, meta in SCHEMA.items():
-        kind = meta["kind"]
-        domain = ("inteiro ≥ 0" if "contagem" in kind else "[0, 1]" if "proporção" in kind
-                  else "{0, 1}" if kind == "binária" else "data válida" if kind == "data"
-                  else "código / texto não vazio")
-        rows.append({"Original": meta["original"], "Nome interno": name,
-                     "Rótulo": meta["label"], "Natureza": kind,
-                     "Tipo Python/pandas": str(df[name].dtype), "Unidade": meta["unit"],
-                     "Domínio": domain, "Significado": meta["description"]})
+    for name, metadata in SCHEMA.items():
+        rows.append({
+            "Original": metadata["original"],
+            "Nome interno": name,
+            "Rótulo": metadata["label"],
+            "Natureza": metadata["kind"],
+            "Tipo Python/pandas": str(dataframe[name].dtype),
+            "Unidade": metadata["unit"],
+            "Domínio": describe_domain(metadata["kind"]),
+            "Significado": metadata["description"],
+        })
     return rows
-

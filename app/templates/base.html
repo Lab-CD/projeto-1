@@ -13,10 +13,38 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231c4038'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='40' fill='%23fff' font-family='Arial'%3EQ%3C/text%3E%3C/svg%3E"
     >
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <noscript>
+      <style>
+        .tab-panel[hidden] { display: block; }
+        .tab-list { display: none; }
+      </style>
+    </noscript>
     <script src="{{ url_for('report.plotly_asset') }}"></script>
   </head>
   <body>
+    {% set nav_groups = [
+      ('Conhecer a base', ['overview', 'dictionary', 'preparation']),
+      ('Avaliar a qualidade', ['quality']),
+      ('Analisar', ['descriptive', 'comparison']),
+      ('Concluir', ['full_report']),
+    ] %}
+    {% set page_keys = pages.keys()|list %}
+    {% set current_step = page_keys.index(page) + 1 %}
+    {% set current = namespace(group='') %}
+    {% for group_name, group_pages in nav_groups %}
+      {% if page in group_pages %}
+        {% set current.group = group_name %}
+      {% endif %}
+    {% endfor %}
+    {% set filter_query = {
+      'time': selected_team,
+      'variavel': variable,
+      'metodo': method,
+      'medida': measure,
+    } %}
+
     <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
     <aside class="sidebar" aria-label="Navegação principal" tabindex="0">
       <a
         class="brand"
@@ -35,21 +63,25 @@
         </span>
       </a>
       <p class="sidebar-kicker">LABORATÓRIO DE CIÊNCIA DE DADOS</p>
+
       <nav class="navigation">
-
-        {% for key, info in pages.items() %}
-
-          <a
-            href="{{ url_for('report.' ~ key, time=selected_team, variavel=variable, metodo=method, medida=measure) }}"
-            class="nav-link {{ 'active' if page == key else '' }}"
-            {% if page == key %} aria-current="page" {% endif %}
-          >
-            <span class="nav-number">{{ '%02d'|format(loop.index) }}</span>{{ info[1] }}<span class="nav-arrow" aria-hidden="true">↗</span>
-          </a>
-
+        {% for group_name, group_pages in nav_groups %}
+          <div class="nav-group">
+            <p class="nav-group-title">{{ group_name }}</p>
+            {% for key in group_pages %}
+              <a
+                href="{{ url_for('report.' ~ key, **filter_query) }}"
+                class="nav-link {{ 'active' if page == key else '' }}"
+                {% if page == key %} aria-current="page" {% endif %}
+              >
+                <span class="nav-number">{{ page_keys.index(key) + 1 }}</span>
+                {{ pages[key][1] }}
+              </a>
+            {% endfor %}
+          </div>
         {% endfor %}
-
       </nav>
+
       <div class="sidebar-bottom">
         <span class="status-dot"></span>
         Análise univariada
@@ -61,6 +93,7 @@
         <span class="sidebar-period">{{ source.date_min|fmt }} — {{ source.date_max|fmt }}</span>
       </div>
     </aside>
+
     <div class="workspace">
       <header class="topbar">
         <span>
@@ -73,8 +106,13 @@
           Base local · {{ source.rows|fmt }} registros
         </span>
       </header>
+
       <main id="conteudo">
-        <div class="page-heading">
+        <header class="page-hero">
+          <div class="hero-labels">
+            <span class="step-badge">Etapa {{ current_step }} de {{ page_keys|length }}</span>
+            <span class="hero-group">{{ current.group }}</span>
+          </div>
           <h1>
             {% block heading %}
               {{ page_title }}
@@ -83,17 +121,47 @@
           <p class="page-description">
             {% block description %}{% endblock %}
           </p>
-        </div>
+          <ol class="stepper" aria-label="Etapas do relatório">
+            {% for key in page_keys %}
+              <li class="{{ 'is-current' if key == page else 'is-done' if loop.index < current_step else '' }}">
+                <a
+                  href="{{ url_for('report.' ~ key, **filter_query) }}"
+                  {% if key == page %} aria-current="step" {% endif %}
+                >
+                  <span class="stepper-dot">{{ loop.index }}</span>
+                  <span class="stepper-label">{{ pages[key][1] }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ol>
+        </header>
 
         {% if page in ['overview', 'quality', 'descriptive', 'comparison', 'full_report'] %}
-
           {% include 'components/filters.html' %}
-
         {% endif %}
 
         {% block content %}{% endblock %}
 
+        <nav class="pager" aria-label="Navegação entre etapas">
+          {% if current_step > 1 %}
+            {% set previous_key = page_keys[current_step - 2] %}
+            <a class="pager-link pager-previous" href="{{ url_for('report.' ~ previous_key, **filter_query) }}">
+              <span class="pager-direction">← Etapa anterior</span>
+              <strong>{{ pages[previous_key][1] }}</strong>
+            </a>
+          {% else %}
+            <span></span>
+          {% endif %}
+          {% if current_step < page_keys|length %}
+            {% set next_key = page_keys[current_step] %}
+            <a class="pager-link pager-next" href="{{ url_for('report.' ~ next_key, **filter_query) }}">
+              <span class="pager-direction">Próxima etapa →</span>
+              <strong>{{ pages[next_key][1] }}</strong>
+            </a>
+          {% endif %}
+        </nav>
       </main>
+
       <footer class="footer">
         <span>Quadra em Dados · Projeto de análise descritiva</span>
         <a href="{{ url_for('report.full_report') }}">Relatório completo ↗</a>
@@ -105,5 +173,32 @@
         </span>
       </footer>
     </div>
+
+    <script>
+      document.querySelectorAll('[data-tabs]').forEach(function (group) {
+        var tabs = Array.prototype.slice.call(group.querySelectorAll('[role="tab"]'));
+        var panels = Array.prototype.slice.call(group.querySelectorAll('[role="tabpanel"]'));
+
+        function select(index, moveFocus) {
+          tabs.forEach(function (tab, tabIndex) {
+            var isSelected = tabIndex === index;
+            tab.setAttribute('aria-selected', isSelected);
+            tab.tabIndex = isSelected ? 0 : -1;
+            panels[tabIndex].hidden = !isSelected;
+          });
+          if (moveFocus) { tabs[index].focus(); }
+          window.dispatchEvent(new Event('resize'));
+        }
+
+        tabs.forEach(function (tab, index) {
+          tab.addEventListener('click', function () { select(index, false); });
+          tab.addEventListener('keydown', function (event) {
+            var last = tabs.length - 1;
+            if (event.key === 'ArrowRight') { select(index === last ? 0 : index + 1, true); }
+            if (event.key === 'ArrowLeft') { select(index === 0 ? last : index - 1, true); }
+          });
+        });
+      });
+    </script>
   </body>
 </html>

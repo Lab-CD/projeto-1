@@ -5,6 +5,15 @@
 {% endblock %}
 
 {% block content %}
+  <section class="type-summary" aria-label="Colunas por tipo">
+    {% for kind, columns in schema.values()|groupby('kind') %}
+      <article class="type-card">
+        <strong>{{ columns|length }}</strong>
+        <span>{{ kind }}</span>
+      </article>
+    {% endfor %}
+  </section>
+
   <section class="panel">
     <div
       class="table-scroll"

@@ -1,0 +1,15 @@
+{% macro collapsible_table(title, aria_label, is_open=False) %}
+  <details class="collapsible"{% if is_open %} open{% endif %}>
+    <summary>
+      <span class="collapsible-title">{{ title }}</span>
+    </summary>
+    <div
+      class="table-scroll collapsible-body"
+      tabindex="0"
+      role="region"
+      aria-label="{{ aria_label }}"
+    >
+      {{ caller() }}
+    </div>
+  </details>
+{% endmacro %}

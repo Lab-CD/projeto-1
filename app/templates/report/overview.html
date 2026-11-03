@@ -32,6 +32,58 @@
       <span>dicionário, tipos e qualidade</span>
     </article>
   </section>
+  <section class="roadmap" aria-labelledby="roadmap-title">
+    <h2 id="roadmap-title">Roteiro da análise</h2>
+    <p class="roadmap-intro">
+      O relatório segue a ordem natural de um projeto de dados: entender a base,
+      conferir a qualidade e só então descrever e comparar as equipes.
+    </p>
+    <ol class="roadmap-steps">
+      <li>
+        <a href="{{ url_for('report.dictionary', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">2</span>
+          <strong>Dicionário de dados</strong>
+          <span>O que cada uma das {{ source.columns }} colunas significa, seu tipo e sua unidade.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('report.preparation', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">3</span>
+          <strong>Preparação</strong>
+          <span>Recorte das duas equipes, conversão de tipos e tratamento da data.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('report.quality', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">4</span>
+          <strong>Qualidade</strong>
+          <span>Ausentes, inconsistências e sete detectores de outliers.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('report.descriptive', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">5</span>
+          <strong>Análise univariada</strong>
+          <span>Medidas, boxplot e histograma de cada variável, por equipe.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('report.comparison', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">6</span>
+          <strong>Comparação</strong>
+          <span>Barras, CV, IQR e assimetria lado a lado entre as equipes.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('report.full_report', time=selected_team, variavel=variable, metodo=method, medida=measure) }}">
+          <span class="roadmap-number">7</span>
+          <strong>Relatório completo</strong>
+          <span>Métodos, interpretações e conclusões em uma só página.</span>
+        </a>
+      </li>
+    </ol>
+  </section>
+
   <div class="section-heading">
     <div>
       <h2>Equipes</h2>

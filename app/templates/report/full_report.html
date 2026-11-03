@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'components/collapsible.html' import collapsible_table %}
 
 {% block description %}
   Resultados, tratamentos, métodos e interpretação das sete variáveis em uma única página.
@@ -32,14 +33,9 @@
   <section id="dicionario" class="panel report-section">
     <h2>2. Dicionário de dados</h2>
     <p>IDs são identificadores, não medidas quantitativas. Proporções são armazenadas em [0, 1] e exibidas em percentual quando indicado. A unidade de observação é um time em uma partida.</p>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Dicionário completo no relatório"
-    >
+    {% call collapsible_table('Tabela do dicionário de dados', 'Dicionário completo no relatório') %}
       {{ dictionary_table }}
-    </div>
+    {% endcall %}
   </section>
 
   <div id="preparacao" class="report-section">
@@ -52,29 +48,18 @@
     <section class="panel prose">
       <h3>Diagnóstico do recorte</h3>
       <p>{{ missing_count }} células ausentes na leitura, {{ invalid_count }} registros com alertas, {{ duplicate_count }} duplicações exatas e {{ duplicate_key_rows }} linhas com chave repetida. Uma linha pode violar várias regras; contagens entre métodos também podem se sobrepor.</p>
-      <div
-        class="table-scroll"
-        tabindex="0"
-        role="region"
-        aria-label="Qualidade por coluna no relatório"
-      >
-        {{ audit_table }}
-      </div>
+    {% call collapsible_table('Qualidade por coluna', 'Qualidade por coluna no relatório') %}
+      {{ audit_table }}
+    {% endcall %}
     </section>
     {% include 'report/partials/quality_discussion.html' %}
     {% include 'report/partials/missing.html' %}
     {% include 'report/partials/detectors.html' %}
     <section class="panel">
       <div class="chart">{{ detection_heatmap }}</div>
-      <h3>Contagens por detector</h3>
-      <div
-        class="table-scroll"
-        tabindex="0"
-        role="region"
-        aria-label="Todos os detectores no relatório"
-      >
-        {{ detectors_table }}
-      </div>
+    {% call collapsible_table('Contagens por detector', 'Todos os detectores no relatório') %}
+      {{ detectors_table }}
+    {% endcall %}
       <details>
         <summary>Jogos sinalizados por todos os métodos</summary>
         <div
@@ -115,32 +100,18 @@
 
   <section id="comparacao" class="panel report-section">
     <h2>7. Comparação entre equipes</h2>
-    <h3>CV (%)</h3>
-    <div class="table-scroll" tabindex="0" role="region" aria-label="CV no relatório">
+    {% call collapsible_table('CV (%)', 'CV no relatório', true) %}
       {{ cv_table }}
-    </div>
-    <h3>IQR</h3>
-    <div class="table-scroll" tabindex="0" role="region" aria-label="IQR no relatório">
+    {% endcall %}
+    {% call collapsible_table('IQR', 'IQR no relatório') %}
       {{ iqr_table }}
-    </div>
-    <h3>Assimetria ajustada</h3>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Assimetria no relatório"
-    >
+    {% endcall %}
+    {% call collapsible_table('Assimetria ajustada', 'Assimetria no relatório') %}
       {{ skew_table }}
-    </div>
-    <h3>Quartis e dispersão</h3>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Quartis no relatório"
-    >
+    {% endcall %}
+    {% call collapsible_table('Quartis e dispersão', 'Quartis no relatório') %}
       {{ comparison_details }}
-    </div>
+    {% endcall %}
   </section>
 
   <div id="sintese" class="report-section">
