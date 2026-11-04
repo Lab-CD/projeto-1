@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from pyod.models.ecod import ECOD
 from scipy import stats
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors
@@ -134,16 +133,20 @@ def _detect_with_grubbs(values, parameters):
 
 def _detect_with_ecod(values, parameters):
     contamination = parameters.get("contamination", CONTAMINATION)
-    column_of_values = values.to_numpy(dtype=float).reshape(-1, 1)
-
-    model = ECOD(contamination=contamination, n_jobs=1).fit(column_of_values)
-    scores = pd.Series(model.decision_scores_, index=values.index)
+    data = values.to_numpy(dtype=float)
+    ordered = np.sort(data)
+    left = -np.log(np.searchsorted(ordered, data, side="right") / len(data))
+    right = -np.log((len(data) - np.searchsorted(ordered, data, side="left")) / len(data))
+    skew = np.sign(np.nan_to_num(stats.skew(data)))
+    skew_score = left * -np.sign(skew - 1) + right * np.sign(skew + 1)
+    scores = pd.Series(np.maximum(np.maximum(left, right), skew_score), index=values.index)
+    threshold = float(np.percentile(scores, 100 * (1 - contamination)))
 
     return {
         "scores": scores,
-        "flags": scores > model.threshold_,
+        "flags": scores > threshold,
         "parameters": {"contamination": contamination},
-        "threshold": float(model.threshold_),
+        "threshold": threshold,
         "notes": [
             "A fração de contaminação define o limiar exploratório; não estima a "
             "proporção verdadeira de erros. Empates podem alterar a quantidade sinalizada."

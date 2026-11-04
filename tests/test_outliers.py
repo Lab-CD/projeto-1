@@ -7,6 +7,12 @@ from analytics.outliers import METHODS, detect_outliers
 
 
 class OutlierTests(unittest.TestCase):
+    def test_ecod_matches_empirical_tails_with_ties(self):
+        result = detect_outliers(pd.Series([0, 0, 1, 2, 10]), "ecod", {"contamination": 0.2})
+        expected = -np.log([2 / 5, 2 / 5, 3 / 5, 2 / 5, 1 / 5])
+        np.testing.assert_allclose(result["rows"]["escore"], expected)
+        self.assertEqual(result["rows"].index[result["rows"]["sinalizado"]].tolist(), [4])
+
     def test_iqr_identifies_source_rows(self):
         series = pd.Series([1, 2, 3, 4, 100], index=[10, 20, 30, 40, 90])
         result = detect_outliers(series, "iqr")
