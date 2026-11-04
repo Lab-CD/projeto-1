@@ -1072,6 +1072,35 @@ summary {
   background: #e7efdf;
 }
 
+.report-index h2 {
+  flex-basis: 100%;
+  margin-bottom: 4px;
+  font-size: 1.1rem;
+}
+
+.back-to-top {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: var(--white);
+  font-size: 1.6rem;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(28, 64, 56, .25);
+}
+
+.back-to-top:hover {
+  background: var(--green);
+  color: var(--white);
+}
+
 .report-section {
   scroll-margin-top: 24px;
 }
@@ -1488,7 +1517,8 @@ summary {
   .filters,
   .scope-line,
   .footer,
-  .modebar {
+  .modebar,
+  .back-to-top {
     display: none !important;
   }
 

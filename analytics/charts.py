@@ -22,11 +22,11 @@ KDE_GRID_POINTS = 250
 
 def style_figure(figure, title, x_title, y_title, height=410):
     figure.update_layout(
-        title={"text": title, "font": {"size": 17}, "x": 0.02},
+        title={"text": title, "font": {"size": 16}, "x": 0.02},
         template="plotly_white",
         height=height,
         autosize=True,
-        font={"family": "Arial, sans-serif", "color": TEXT_COLOR, "size": 12},
+        font={"family": "Inter, Segoe UI, Arial, sans-serif", "color": TEXT_COLOR, "size": 12},
         paper_bgcolor="white",
         plot_bgcolor="white",
         margin={"l": 65, "r": 28, "t": 65, "b": 100},
