@@ -2,7 +2,8 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.env
 *.log
 artifacts/
 
+config.bat
+node_modules

@@ -91,8 +91,8 @@ SCHEMA = dict([
         kind="contagem",
         unit="minutos-equipe/jogo",
         description=(
-            "Valores compatíveis com soma de minutos dos jogadores (240, 265, 290). "
-            "Interpretação ainda a confirmar na fonte."
+            "Soma dos minutos em quadra dos cinco jogadores da equipe "
+            "(240 no tempo regulamentar; +25 por prorrogação)."
         ),
     ),
     _column(
